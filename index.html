@@ -50,10 +50,11 @@
         .titulo-tabla { margin: 0; color: #2c3e50; font-size: 18px; display: inline-block;}
         .fila-totales { font-weight: bold !important; background-color: #eef2f5 !important; }
 
-        /* --- MODO VERTICAL --- */
+        /* --- MODO VERTICAL Y CENTRADO --- */
         table.modo-general th {
-            writing-mode: vertical-rl; transform: rotate(180deg); text-align: center;
-            height: 160px; padding: 5px; vertical-align: bottom; max-width: 25px;
+            writing-mode: vertical-rl; transform: rotate(180deg); 
+            text-align: center; vertical-align: middle; /* Asegura el centrado */
+            height: 160px; padding: 10px 5px; max-width: 30px;
             border-left: 1px solid #e1e1e1; border-right: 1px solid #e1e1e1; font-size: 12px;
         }
         table.modo-general td { text-align: center; font-size: 15px;}
@@ -62,20 +63,30 @@
             max-width: none; min-width: 160px; vertical-align: middle; position: sticky; left: 0;
             background-color: white; z-index: 1;
         }
+        table.modo-general th:first-child { background-color: #f8f9fa; z-index: 2; }
 
-        /* --- VENTANA MODAL (POPUP) --- */
+        /* --- ELEMENTOS INTERACTIVOS (Nombres y Ceros) --- */
+        .nombre-clickable { color: #2980b9; cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .nombre-clickable:hover { color: #e67e22; }
+        .valor-cero { color: #95a5a6 !important; font-weight: normal; } /* Color Gris para el 0 */
+
+        /* --- VENTANAS MODALES (POPUP) --- */
         .modal {
             display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;
         }
         .modal-content {
             background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;
-            position: relative; text-align: center;
+            position: relative; text-align: center; max-height: 90vh; overflow-y: auto;
         }
         .close-modal {
-            position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #666;
+            position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #666; font-weight: bold;
         }
         #chart-container { width: 100%; height: 400px; margin-top: 10px; }
+        
+        /* Tabla Ficha Individual */
+        .tabla-ficha th { background-color: #34495e; color: white; width: 60%; text-align: left;}
+        .tabla-ficha td { font-size: 16px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -144,6 +155,16 @@
         </div>
     </div>
 
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="close-modal" onclick="cerrarModalDetalle()">&times;</span>
+            <h2 id="titulo-modal-detalle" style="color: #2c3e50; text-transform: uppercase; margin-top: 0;">Detalle del Técnico</h2>
+            <table class="tabla-ficha">
+                <tbody id="cuerpo-modal-detalle"></tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         let datosGlobales = {};
         let tablaActiva = "";
@@ -174,7 +195,6 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('activo'));
             document.getElementById('btn-' + idTabla).classList.add('activo');
 
-            // Mostrar u ocultar botón de gráfica
             document.getElementById('btn-ver-grafica').style.display = permitirGrafica ? 'inline-block' : 'none';
 
             const tablaEl = document.getElementById('miTabla');
@@ -201,8 +221,28 @@
 
                     fila.forEach((celda, idx) => {
                         const td = document.createElement('td');
-                        td.textContent = celda || '';
+                        
+                        // LÓGICA DE CEROS CORREGIDA
+                        // Si la celda tiene un valor, lo muestra. Si es exactamente 0, también lo muestra.
+                        let valorTexto = (celda !== null && celda !== undefined && String(celda).trim() !== '') ? celda : '';
+                        td.textContent = valorTexto;
+                        
+                        // Si el valor es "0", aplicamos la clase gris
+                        if (String(valorTexto) === '0') {
+                            td.classList.add('valor-cero');
+                        }
+
+                        // Negrita para la columna Total
                         if (encabezados[idx] && String(encabezados[idx]).toUpperCase() === 'TOTAL') td.style.fontWeight = 'bold';
+                        
+                        // LÓGICA DE NOMBRE CLICKEABLE PARA FICHA INDIVIDUAL
+                        if (idx === 0 && esGeneral && !esFilaTotal && valorTexto !== '') {
+                            td.classList.add('nombre-clickable');
+                            td.onclick = function() {
+                                abrirModalDetalle(fila, encabezados);
+                            };
+                        }
+
                         tr.appendChild(td);
                     });
                     cuerpo.appendChild(tr);
@@ -210,45 +250,71 @@
             }
         }
 
+        // --- LÓGICA DE FICHA INDIVIDUAL VERTICAL ---
+        function abrirModalDetalle(filaDatos, encabezados) {
+            document.getElementById('modal-detalle').style.display = 'flex';
+            document.getElementById('titulo-modal-detalle').innerText = "Técnico: " + filaDatos[0]; // Nombre
+            
+            const tbodyDetalle = document.getElementById('cuerpo-modal-detalle');
+            tbodyDetalle.innerHTML = '';
+
+            // Saltamos el índice 0 porque es el Nombre, empezamos a mostrar desde la columna 1
+            for (let i = 1; i < encabezados.length; i++) {
+                const tr = document.createElement('tr');
+                
+                // Columna Izquierda: Encabezado (Ej. Inscripción)
+                const thCategoria = document.createElement('th');
+                thCategoria.textContent = encabezados[i];
+                
+                // Columna Derecha: Número
+                const tdValor = document.createElement('td');
+                let valor = (filaDatos[i] !== null && filaDatos[i] !== undefined && String(filaDatos[i]).trim() !== '') ? filaDatos[i] : '';
+                tdValor.textContent = valor;
+                
+                if (String(valor) === '0') {
+                    tdValor.classList.add('valor-cero');
+                }
+
+                tr.appendChild(thCategoria);
+                tr.appendChild(tdValor);
+                tbodyDetalle.appendChild(tr);
+            }
+        }
+
+        function cerrarModalDetalle() { document.getElementById('modal-detalle').style.display = 'none'; }
+
+
         // --- LÓGICA DE GRÁFICA ---
         function abrirModalGrafica() {
             document.getElementById('modal-grafica').style.display = 'flex';
             document.getElementById('titulo-modal').innerText = "Porcentajes: " + document.getElementById('titulo-actual').innerText;
             
             const matriz = datosGlobales[tablaActiva];
-            
             let etiquetas = [];
             let valores = [];
 
-            // Leer la tabla de forma VERTICAL (Categorías en columna 0, números en las siguientes)
             for (let i = 0; i < matriz.length; i++) {
                 let fila = matriz[i];
-                
-                // Validar que la fila exista y tenga datos
                 if (!fila || fila.length === 0) continue;
 
                 let label = String(fila[0] || '').trim();
                 let labelUpper = label.toUpperCase();
 
-                // EXCLUIR explícitamente la fila de "TOTAL", años (2025/2026), o títulos
                 if (!label || labelUpper.includes('TOTAL') || labelUpper === '2026' || labelUpper === '2025' || labelUpper.includes('UBICACION')) {
-                    continue; // Se salta esta fila y pasa a la siguiente
+                    continue; 
                 }
 
-                // Buscar el primer valor numérico válido en las otras columnas de esa fila
                 let valor = 0;
                 for (let j = 1; j < fila.length; j++) {
-                    // Limpiar el texto por si tiene comas (ej. 1,000)
                     let cellData = String(fila[j]).trim().replace(/,/g, ''); 
                     let celdaNum = parseFloat(cellData);
                     
                     if (!isNaN(celdaNum) && cellData !== '') {
                         valor = celdaNum;
-                        break; // Encontramos el número, dejamos de buscar en esta fila
+                        break; 
                     }
                 }
 
-                // Si encontró un valor mayor a 0, lo agrega a la rebanada del pastel
                 if (valor > 0) {
                     etiquetas.push(label);
                     valores.push(valor);
@@ -268,8 +334,7 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom', labels: { font: { family: 'Roboto Condensed', size: 12 } } },
                         tooltip: {
@@ -289,7 +354,13 @@
         }
 
         function cerrarModal() { document.getElementById('modal-grafica').style.display = 'none'; }
-        window.onclick = function(event) { if (event.target == document.getElementById('modal-grafica')) cerrarModal(); }
+        
+        // Cierra los modales al hacer clic fuera de ellos
+        window.onclick = function(event) { 
+            if (event.target == document.getElementById('modal-grafica')) cerrarModal(); 
+            if (event.target == document.getElementById('modal-detalle')) cerrarModalDetalle(); 
+        }
     </script>
 </body>
 </html>
+
