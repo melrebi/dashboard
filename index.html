@@ -216,12 +216,78 @@
             document.getElementById('titulo-modal').innerText = "Porcentajes: " + document.getElementById('titulo-actual').innerText;
             
             const matriz = datosGlobales[tablaActiva];
-            const encabezados = matriz[0];
-            // Buscamos la fila de totales (suele ser la última con datos)
-            let filaTotales = matriz.find(f => f.some(c => String(c).toUpperCase() === 'TOTAL')) || matriz[matriz.length - 1];
-
+            
             let etiquetas = [];
             let valores = [];
+
+            // Leer la tabla de forma VERTICAL (Categorías en columna 0, números en las siguientes)
+            for (let i = 0; i < matriz.length; i++) {
+                let fila = matriz[i];
+                
+                // Validar que la fila exista y tenga datos
+                if (!fila || fila.length === 0) continue;
+
+                let label = String(fila[0] || '').trim();
+                let labelUpper = label.toUpperCase();
+
+                // EXCLUIR explícitamente la fila de "TOTAL", años (2025/2026), o títulos
+                if (!label || labelUpper.includes('TOTAL') || labelUpper === '2026' || labelUpper === '2025' || labelUpper.includes('UBICACION')) {
+                    continue; // Se salta esta fila y pasa a la siguiente
+                }
+
+                // Buscar el primer valor numérico válido en las otras columnas de esa fila
+                let valor = 0;
+                for (let j = 1; j < fila.length; j++) {
+                    // Limpiar el texto por si tiene comas (ej. 1,000)
+                    let cellData = String(fila[j]).trim().replace(/,/g, ''); 
+                    let celdaNum = parseFloat(cellData);
+                    
+                    if (!isNaN(celdaNum) && cellData !== '') {
+                        valor = celdaNum;
+                        break; // Encontramos el número, dejamos de buscar en esta fila
+                    }
+                }
+
+                // Si encontró un valor mayor a 0, lo agrega a la rebanada del pastel
+                if (valor > 0) {
+                    etiquetas.push(label);
+                    valores.push(valor);
+                }
+            }
+
+            const ctx = document.getElementById('canvasGrafica').getContext('2d');
+            if (miGrafica) miGrafica.destroy();
+
+            miGrafica = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        data: valores,
+                        // Paleta de colores más amplia para los distintos trámites
+                        backgroundColor: ['#3498db', '#e67e22', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e', '#7f8c8d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Roboto Condensed', size: 12 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.parsed;
+                                    let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                                    return label + ": " + value + " expedientes (" + percentage + ")";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
             // Filtrar columnas para el pastel (Omitir No, Nombre y el TOTAL general)
             encabezados.forEach((h, idx) => {
@@ -273,3 +339,4 @@
     </script>
 </body>
 </html>
+
