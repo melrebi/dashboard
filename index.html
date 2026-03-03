@@ -4,15 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Rendimiento Técnico</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .chart-container { position: relative; height: 50vh; width: 100%; margin-top: 20px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+            /* Permite hacer scroll horizontal en teléfonos móviles */
+            overflow-x: auto; 
+        }
+        
         /* Pantalla de login básica */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white;}
+        #login-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #2c3e50; display: flex; justify-content: center; 
+            align-items: center; z-index: 1000; flex-direction: column; color: white;
+        }
         #login-screen input { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; }
         #login-screen button { padding: 10px 20px; cursor: pointer; background: #18bc9c; border: none; border-radius: 5px; color: white; font-weight: bold;}
+        
+        /* Diseño de la Tabla Exacta */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            font-size: 14px; 
+            white-space: nowrap; /* Evita que el texto de las celdas se parta en varias líneas */
+        }
+        th, td { 
+            padding: 12px 15px; 
+            text-align: left; 
+            border-bottom: 1px solid #dddddd; 
+        }
+        th { 
+            background-color: #3498db; 
+            color: white; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        /* Efecto cebra para las filas de datos */
+        tbody tr:nth-of-type(even) { background-color: #f9f9f9; }
+        tbody tr:hover { background-color: #f1f1f1; }
     </style>
 </head>
 <body>
@@ -24,17 +64,22 @@
     </div>
 
     <div class="container" id="dashboard" style="display:none;">
-        <h2>Estado de Expedientes por Técnico</h2>
-        <div class="chart-container">
-            <canvas id="miGrafico"></canvas>
-        </div>
+        <h2>Detalle de Expedientes</h2>
+        <table id="miTabla">
+            <thead>
+                <tr id="tabla-cabecera">
+                    </tr>
+            </thead>
+            <tbody id="tabla-cuerpo">
+                </tbody>
+        </table>
     </div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DE SEGURIDAD BÁSICA ---
+        // --- 1. CONFIGURACIÓN DE SEGURIDAD ---
         function checkPassword() {
             const pass = document.getElementById('password').value;
-            // Cambia 'tu_contraseña_segura' por la clave que usarán
+            // Contraseña de prueba
             if (pass === '123456') { 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
@@ -44,61 +89,66 @@
             }
         }
 
-        // --- 2. CONEXIÓN CON GOOGLE SHEETS ---
+        // --- 2. CONEXIÓN CON TU APPS SCRIPT ---
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5M2vPZLqENz5W4KbKNhJWrKvWG3EgkBqUw02Xgz-IDpRNiTBWifeeXwBGyhNNvfbRNA/exec';
 
         async function cargarDatos() {
+            const cuerpoTabla = document.getElementById('tabla-cuerpo');
+            cuerpoTabla.innerHTML = '<tr><td colspan="100%">Cargando datos del personal técnico...</td></tr>';
+
             try {
                 const respuesta = await fetch(APPS_SCRIPT_URL);
                 const datos = await respuesta.json();
                 
-                // Extraemos los nombres y totales (Ajusta estos nombres según las columnas de tu CSV)
-                // Por ejemplo, usando la hoja GENERAL:
-                const nombres = datos.map(fila => fila["NOMBRE"]);
-                const inscripciones = datos.map(fila => fila["INSCR"]);
-                const varios = datos.map(fila => fila["VARIOS"]);
+                // Verificar si Apps Script mandó un mensaje de error (por ejemplo, si no encuentra los encabezados)
+                if (datos.error) {
+                    cuerpoTabla.innerHTML = `<tr><td colspan="100%" style="color: red;">Error: ${datos.error}</td></tr>`;
+                    return;
+                }
 
-                dibujarGrafico(nombres, inscripciones, varios);
+                if (datos.length > 0) {
+                    dibujarTabla(datos);
+                } else {
+                    cuerpoTabla.innerHTML = '<tr><td colspan="100%">No se encontraron datos en la hoja.</td></tr>';
+                }
+
             } catch (error) {
                 console.error("Error al cargar los datos:", error);
-                alert("Hubo un error al sincronizar con Google Sheets.");
+                cuerpoTabla.innerHTML = '<tr><td colspan="100%" style="color: red;">Hubo un problema de conexión al intentar obtener los datos.</td></tr>';
             }
         }
 
-        // --- 3. DIBUJAR EL GRÁFICO INTERACTIVO ---
-        function dibujarGrafico(etiquetas, datosInscripciones, datosVarios) {
-            const ctx = document.getElementById('miGrafico').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar', // Puede ser 'bar', 'line', 'pie', etc.
-                data: {
-                    labels: etiquetas,
-                    datasets: [
-                        {
-                            label: 'Inscripciones',
-                            data: datosInscripciones,
-                            backgroundColor: '#3498db'
-                        },
-                        {
-                            label: 'Varios',
-                            data: datosVarios,
-                            backgroundColor: '#e74c3c'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true }, // Permite apilar las barras
-                        y: { stacked: true, beginAtZero: true }
-                    },
-                    plugins: {
-                        tooltip: { mode: 'index', intersect: false } // Mejora la interactividad al pasar el mouse/dedo
-                    }
-                }
+        // --- 3. CONSTRUCCIÓN DINÁMICA DE LA TABLA ---
+        function dibujarTabla(datos) {
+            const cabecera = document.getElementById('tabla-cabecera');
+            const cuerpo = document.getElementById('tabla-cuerpo');
+            
+            // Limpiamos contenido previo
+            cabecera.innerHTML = '';
+            cuerpo.innerHTML = '';
+
+            // Obtenemos los nombres de las columnas (encabezados) de la primera fila de datos
+            const columnas = Object.keys(datos[0]);
+            
+            // 1. Dibujar los encabezados (<th>)
+            columnas.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                cabecera.appendChild(th);
+            });
+
+            // 2. Dibujar las filas de datos (<tr> y <td>)
+            datos.forEach(fila => {
+                const tr = document.createElement('tr');
+                columnas.forEach(col => {
+                    const td = document.createElement('td');
+                    // Verificamos si la celda tiene información, si no, la dejamos en blanco
+                    td.textContent = (fila[col] !== undefined && fila[col] !== null) ? fila[col] : '';
+                    tr.appendChild(td);
+                });
+                cuerpo.appendChild(tr);
             });
         }
     </script>
 </body>
-
 </html>
