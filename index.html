@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Municipalidad</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- ESTILOS GENERALES --- */
         body { font-family: 'Roboto Condensed', sans-serif; font-size: 12px; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333;}
@@ -23,7 +24,7 @@
         .titulo-area { display: flex; align-items: center; gap: 15px; }
         .fecha-emision { font-weight: bold; color: #7f8c8d; font-size: 14px; }
 
-        /* --- MENÚ DE BOTONES ORGANIZADOS --- */
+        /* --- BOTONES Y SECCIONES --- */
         .seccion-botones { margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498db;}
         .seccion-botones h3 { margin-top: 0; margin-bottom: 10px; font-size: 15px; color: #2c3e50; text-transform: uppercase;}
         .botones-container { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -32,35 +33,49 @@
         .tab-btn:hover { background-color: #e2e2e2; }
         .tab-btn.activo { background-color: #2c3e50; color: white; border-color: #2c3e50; }
 
+        /* --- BOTÓN GRÁFICA --- */
+        #btn-ver-grafica {
+            display: none; background-color: #e67e22; color: white; border: none; 
+            padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;
+            font-family: 'Roboto Condensed', sans-serif; margin-left: 15px; text-transform: uppercase;
+        }
+
         /* --- DISEÑO DE TABLA --- */
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-        /* Aumento de tamaño de fuente a 14px y centrado de datos */
         th, td { padding: 10px 10px; text-align: center; border-bottom: 1px solid #e1e1e1; font-size: 14px; }
-        /* Mantener la primera columna a la izquierda para los nombres */
         th:first-child, td:first-child { text-align: left; }
-        
         th { background-color: #f8f9fa; color: #2c3e50; font-weight: bold; text-transform: uppercase;}
         tbody tr:nth-of-type(even) { background-color: #fbfbfb; }
         tbody tr:hover { background-color: #f5f5f5; }
-        .titulo-tabla { margin-top: 0; color: #2c3e50; font-size: 18px;}
+        .titulo-tabla { margin: 0; color: #2c3e50; font-size: 18px; display: inline-block;}
+        .fila-totales { font-weight: bold !important; background-color: #eef2f5 !important; }
 
-        /* --- MODO VERTICAL (Para tablas generales/detalladas) --- */
+        /* --- MODO VERTICAL --- */
         table.modo-general th {
             writing-mode: vertical-rl; transform: rotate(180deg); text-align: center;
             height: 160px; padding: 5px; vertical-align: bottom; max-width: 25px;
             border-left: 1px solid #e1e1e1; border-right: 1px solid #e1e1e1; font-size: 12px;
         }
-        /* Aumento extra de fuente para los números en el detalle general */
         table.modo-general td { text-align: center; font-size: 15px;}
         table.modo-general th:first-child, table.modo-general td:first-child {
             writing-mode: horizontal-tb; transform: none; height: auto; text-align: left;
             max-width: none; min-width: 160px; vertical-align: middle; position: sticky; left: 0;
             background-color: white; z-index: 1;
         }
-        table.modo-general th:first-child { background-color: #f8f9fa; z-index: 2; }
-        
-        /* Estilo para las filas de totales */
-        .fila-totales { font-weight: bold !important; background-color: #eef2f5 !important; }
+
+        /* --- VENTANA MODAL (POPUP) --- */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;
+            position: relative; text-align: center;
+        }
+        .close-modal {
+            position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #666;
+        }
+        #chart-container { width: 100%; height: 400px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -80,35 +95,36 @@
                 <h1 style="margin: 0; font-size: 22px;">Control de Expedientes y Rendimiento</h1>
             </div>
             <div class="fecha-emision">
-                Fecha de Emisión: <span id="fecha-actual"></span>
+                Fecha: <span id="fecha-actual"></span>
             </div>
         </div>
 
         <div id="menu-principal" style="display: none;">
-            
-            <div class="seccion-botones" style="border-left-color: #3498db;">
+            <div class="seccion-botones">
                 <h3>📊 Cantidad de Expedientes</h3>
                 <div class="botones-container">
-                    <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false)">Consolidado 2026</button>
-                    <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Consolidado - Año 2025', false)">Consolidado 2025</button>
-                    <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'Detalle - Año 2026', true)">Detalle 2026</button>
-                    <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'Detalle - Año 2025', true)">Detalle 2025</button>
+                    <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false, true)">Consolidado 2026</button>
+                    <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Consolidado - Año 2025', false, true)">Consolidado 2025</button>
+                    <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'Detalle - Año 2026', true, false)">Detalle 2026</button>
+                    <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'Detalle - Año 2025', true, false)">Detalle 2025</button>
                 </div>
             </div>
 
             <div class="seccion-botones" style="border-left-color: #e67e22;">
                 <h3>📂 Ubicación de Expedientes (Pestaña Estado)</h3>
                 <div class="botones-container">
-                    <button class="tab-btn" id="btn-estadoConsolidado2026" onclick="mostrarTabla('estadoConsolidado2026', 'Ubicación de Expedientes (Consolidado) - 2026', false)">Ubicación 2026</button>
-                    <button class="tab-btn" id="btn-estadoConsolidado2025" onclick="mostrarTabla('estadoConsolidado2025', 'Ubicación de Expedientes (Consolidado) - 2025', false)">Ubicación 2025</button>
-                    <button class="tab-btn" id="btn-estadoGeneral2026" onclick="mostrarTabla('estadoGeneral2026', 'Detalle de Ubicación por Inspector - 2026', true)">Detalle 2026</button>
-                    <button class="tab-btn" id="btn-estadoGeneral2025" onclick="mostrarTabla('estadoGeneral2025', 'Detalle de Ubicación por Inspector - 2025', true)">Detalle 2025</button>
+                    <button class="tab-btn" id="btn-estadoConsolidado2026" onclick="mostrarTabla('estadoConsolidado2026', 'Ubicación de Expedientes (Consolidado) - 2026', false, true)">Ubicación 2026</button>
+                    <button class="tab-btn" id="btn-estadoConsolidado2025" onclick="mostrarTabla('estadoConsolidado2025', 'Ubicación de Expedientes (Consolidado) - 2025', false, true)">Ubicación 2025</button>
+                    <button class="tab-btn" id="btn-estadoGeneral2026" onclick="mostrarTabla('estadoGeneral2026', 'Detalle de Ubicación por Inspector - 2026', true, false)">Detalle 2026</button>
+                    <button class="tab-btn" id="btn-estadoGeneral2025" onclick="mostrarTabla('estadoGeneral2025', 'Detalle de Ubicación por Inspector - 2025', true, false)">Detalle 2025</button>
                 </div>
             </div>
-
         </div>
 
-        <h2 class="titulo-tabla" id="titulo-actual">Sincronizando con Google Sheets...</h2>
+        <div style="margin-top: 20px; display: flex; align-items: center;">
+            <h2 class="titulo-tabla" id="titulo-actual">Sincronizando...</h2>
+            <button id="btn-ver-grafica" onclick="abrirModalGrafica()">Ver Gráfica de Pastel</button>
+        </div>
         
         <div class="responsive-table">
             <table id="miTabla">
@@ -118,102 +134,142 @@
         </div>
     </div>
 
+    <div id="modal-grafica" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            <h3 id="titulo-modal">Porcentajes de Distribución</h3>
+            <div id="chart-container">
+                <canvas id="canvasGrafica"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let datosGlobales = {};
+        let tablaActiva = "";
+        let miGrafica = null;
+
         function checkPassword() {
-            const pass = document.getElementById('password').value;
-            if (pass === '123456') { 
+            if (document.getElementById('password').value === '123456') { 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
-                
                 const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-ES', opciones);
-                
                 cargarDatos();
-            } else {
-                alert('Contraseña incorrecta');
-            }
+            } else { alert('Contraseña incorrecta'); }
         }
-
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5M2vPZLqENz5W4KbKNhJWrKvWG3EgkBqUw02Xgz-IDpRNiTBWifeeXwBGyhNNvfbRNA/exec';
-        let datosGlobales = {};
 
         async function cargarDatos() {
             try {
-                const respuesta = await fetch(APPS_SCRIPT_URL);
+                const respuesta = await fetch('https://script.google.com/macros/s/AKfycbx5M2vPZLqENz5W4KbKNhJWrKvWG3EgkBqUw02Xgz-IDpRNiTBWifeeXwBGyhNNvfbRNA/exec');
                 datosGlobales = await respuesta.json();
-                
                 document.getElementById('menu-principal').style.display = 'block';
-                mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false);
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('titulo-actual').innerText = "Error de conexión. Verifique la API.";
-            }
+                mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false, true);
+            } catch (e) { document.getElementById('titulo-actual').innerText = "Error de conexión."; }
         }
 
-        function mostrarTabla(idTabla, titulo, esGeneral) {
+        function mostrarTabla(idTabla, titulo, esGeneral, permitirGrafica) {
+            tablaActiva = idTabla;
             document.getElementById('titulo-actual').innerText = titulo;
-
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('activo'));
             document.getElementById('btn-' + idTabla).classList.add('activo');
+
+            // Mostrar u ocultar botón de gráfica
+            document.getElementById('btn-ver-grafica').style.display = permitirGrafica ? 'inline-block' : 'none';
 
             const tablaEl = document.getElementById('miTabla');
             const cabecera = document.getElementById('tabla-cabecera');
             const cuerpo = document.getElementById('tabla-cuerpo');
             
-            cabecera.innerHTML = '';
-            cuerpo.innerHTML = '';
-
-            if (esGeneral) {
-                tablaEl.classList.add('modo-general');
-            } else {
-                tablaEl.classList.remove('modo-general');
-            }
+            cabecera.innerHTML = ''; cuerpo.innerHTML = '';
+            esGeneral ? tablaEl.classList.add('modo-general') : tablaEl.classList.remove('modo-general');
 
             const matrizDatos = datosGlobales[idTabla];
-
-            if (!matrizDatos || matrizDatos.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="100%">No hay datos disponibles en este rango.</td></tr>';
-                return;
-            }
+            if (!matrizDatos) return;
 
             const encabezados = matrizDatos[0];
             const trCabecera = document.createElement('tr');
-            
-            encabezados.forEach(textoColumna => {
-                const th = document.createElement('th');
-                th.textContent = textoColumna;
-                trCabecera.appendChild(th);
-            });
+            encabezados.forEach(h => { const th = document.createElement('th'); th.textContent = h; trCabecera.appendChild(th); });
             cabecera.appendChild(trCabecera);
 
             for (let i = 1; i < matrizDatos.length; i++) {
                 const fila = matrizDatos[i];
-                const filaTieneDatos = fila.some(celda => celda !== "" && celda !== null); 
-                
-                if (filaTieneDatos) {
+                if (fila.some(c => c !== "" && c !== null)) {
                     const tr = document.createElement('tr');
-                    
-                    // LÓGICA DE TOTALES: Si alguna celda de la fila contiene la palabra "TOTAL"
-                    const esFilaTotal = fila.some(celda => String(celda).trim().toUpperCase() === 'TOTAL');
-                    if (esFilaTotal) {
-                        tr.classList.add('fila-totales');
-                    }
+                    const esFilaTotal = fila.some(c => String(c).trim().toUpperCase() === 'TOTAL');
+                    if (esFilaTotal) tr.classList.add('fila-totales');
 
-                    fila.forEach((celda, index) => {
+                    fila.forEach((celda, idx) => {
                         const td = document.createElement('td');
-                        td.textContent = (celda !== null && celda !== undefined) ? celda : '';
-                        
-                        // LÓGICA DE TOTALES: Si la columna se llama "TOTAL", poner en negrita esa celda en particular
-                        if (encabezados[index] && String(encabezados[index]).trim().toUpperCase() === 'TOTAL') {
-                            td.style.fontWeight = 'bold';
-                        }
-                        
+                        td.textContent = celda || '';
+                        if (encabezados[idx] && String(encabezados[idx]).toUpperCase() === 'TOTAL') td.style.fontWeight = 'bold';
                         tr.appendChild(td);
                     });
                     cuerpo.appendChild(tr);
                 }
             }
         }
+
+        // --- LÓGICA DE GRÁFICA ---
+        function abrirModalGrafica() {
+            document.getElementById('modal-grafica').style.display = 'flex';
+            document.getElementById('titulo-modal').innerText = "Porcentajes: " + document.getElementById('titulo-actual').innerText;
+            
+            const matriz = datosGlobales[tablaActiva];
+            const encabezados = matriz[0];
+            // Buscamos la fila de totales (suele ser la última con datos)
+            let filaTotales = matriz.find(f => f.some(c => String(c).toUpperCase() === 'TOTAL')) || matriz[matriz.length - 1];
+
+            let etiquetas = [];
+            let valores = [];
+
+            // Filtrar columnas para el pastel (Omitir No, Nombre y el TOTAL general)
+            encabezados.forEach((h, idx) => {
+                const head = String(h).toUpperCase();
+                if (head !== 'NO.' && head !== 'NOMBRE' && head !== 'TOTAL' && head !== '' && head !== 'NO') {
+                    const val = parseFloat(filaTotales[idx]) || 0;
+                    if (val > 0) {
+                        etiquetas.push(h);
+                        valores.push(val);
+                    }
+                }
+            });
+
+            const ctx = document.getElementById('canvasGrafica').getContext('2d');
+            if (miGrafica) miGrafica.destroy();
+
+            miGrafica = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: ['#3498db', '#e67e22', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Roboto Condensed', size: 12 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.parsed;
+                                    let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                                    return label + ": " + value + " (" + percentage + ")";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function cerrarModal() { document.getElementById('modal-grafica').style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == document.getElementById('modal-grafica')) cerrarModal(); }
     </script>
 </body>
 </html>
