@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Rendimiento Técnico</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .chart-container { position: relative; height: 50vh; width: 100%; margin-top: 20px; }
+        /* Pantalla de login básica */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white;}
+        #login-screen input { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; }
+        #login-screen button { padding: 10px 20px; cursor: pointer; background: #18bc9c; border: none; border-radius: 5px; color: white; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h2>Acceso Restringido</h2>
+        <input type="password" id="password" placeholder="Ingrese contraseña">
+        <button onclick="checkPassword()">Ingresar</button>
+    </div>
+
+    <div class="container" id="dashboard" style="display:none;">
+        <h2>Estado de Expedientes por Técnico</h2>
+        <div class="chart-container">
+            <canvas id="miGrafico"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURACIÓN DE SEGURIDAD BÁSICA ---
+        function checkPassword() {
+            const pass = document.getElementById('password').value;
+            // Cambia 'tu_contraseña_segura' por la clave que usarán
+            if (pass === '123456') { 
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                cargarDatos();
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        // --- 2. CONEXIÓN CON GOOGLE SHEETS ---
+        const APPS_SCRIPT_URL = 'PEGAR_AQUI_TU_URL_DE_APPS_SCRIPT';
+
+        async function cargarDatos() {
+            try {
+                const respuesta = await fetch(APPS_SCRIPT_URL);
+                const datos = await respuesta.json();
+                
+                // Extraemos los nombres y totales (Ajusta estos nombres según las columnas de tu CSV)
+                // Por ejemplo, usando la hoja GENERAL:
+                const nombres = datos.map(fila => fila["NOMBRE"]);
+                const inscripciones = datos.map(fila => fila["INSCR"]);
+                const varios = datos.map(fila => fila["VARIOS"]);
+
+                dibujarGrafico(nombres, inscripciones, varios);
+            } catch (error) {
+                console.error("Error al cargar los datos:", error);
+                alert("Hubo un error al sincronizar con Google Sheets.");
+            }
+        }
+
+        // --- 3. DIBUJAR EL GRÁFICO INTERACTIVO ---
+        function dibujarGrafico(etiquetas, datosInscripciones, datosVarios) {
+            const ctx = document.getElementById('miGrafico').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar', // Puede ser 'bar', 'line', 'pie', etc.
+                data: {
+                    labels: etiquetas,
+                    datasets: [
+                        {
+                            label: 'Inscripciones',
+                            data: datosInscripciones,
+                            backgroundColor: '#3498db'
+                        },
+                        {
+                            label: 'Varios',
+                            data: datosVarios,
+                            backgroundColor: '#e74c3c'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true }, // Permite apilar las barras
+                        y: { stacked: true, beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: { mode: 'index', intersect: false } // Mejora la interactividad al pasar el mouse/dedo
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
