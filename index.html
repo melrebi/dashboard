@@ -21,38 +21,46 @@
         /* --- ENCABEZADO Y FECHA --- */
         .encabezado-dashboard { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .titulo-area { display: flex; align-items: center; gap: 15px; }
-        .fecha-emision { font-weight: bold; color: #7f8c8d; }
+        .fecha-emision { font-weight: bold; color: #7f8c8d; font-size: 14px; }
 
         /* --- MENÚ DE BOTONES ORGANIZADOS --- */
         .seccion-botones { margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498db;}
-        .seccion-botones h3 { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #2c3e50; text-transform: uppercase;}
+        .seccion-botones h3 { margin-top: 0; margin-bottom: 10px; font-size: 15px; color: #2c3e50; text-transform: uppercase;}
         .botones-container { display: flex; gap: 8px; flex-wrap: wrap; }
         
-        .tab-btn { font-family: 'Roboto Condensed', sans-serif; padding: 8px 12px; background-color: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-weight: bold; color: #555; transition: 0.2s; font-size: 12px;}
+        .tab-btn { font-family: 'Roboto Condensed', sans-serif; padding: 8px 12px; background-color: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-weight: bold; color: #555; transition: 0.2s; font-size: 13px;}
         .tab-btn:hover { background-color: #e2e2e2; }
         .tab-btn.activo { background-color: #2c3e50; color: white; border-color: #2c3e50; }
 
         /* --- DISEÑO DE TABLA --- */
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        /* Aumento de tamaño de fuente a 14px y centrado de datos */
+        th, td { padding: 10px 10px; text-align: center; border-bottom: 1px solid #e1e1e1; font-size: 14px; }
+        /* Mantener la primera columna a la izquierda para los nombres */
+        th:first-child, td:first-child { text-align: left; }
+        
         th { background-color: #f8f9fa; color: #2c3e50; font-weight: bold; text-transform: uppercase;}
         tbody tr:nth-of-type(even) { background-color: #fbfbfb; }
         tbody tr:hover { background-color: #f5f5f5; }
-        .titulo-tabla { margin-top: 0; color: #2c3e50; font-size: 16px;}
+        .titulo-tabla { margin-top: 0; color: #2c3e50; font-size: 18px;}
 
         /* --- MODO VERTICAL (Para tablas generales/detalladas) --- */
         table.modo-general th {
             writing-mode: vertical-rl; transform: rotate(180deg); text-align: center;
-            height: 150px; padding: 5px; vertical-align: bottom; max-width: 25px;
-            border-left: 1px solid #e1e1e1; border-right: 1px solid #e1e1e1; font-size: 11px;
+            height: 160px; padding: 5px; vertical-align: bottom; max-width: 25px;
+            border-left: 1px solid #e1e1e1; border-right: 1px solid #e1e1e1; font-size: 12px;
         }
-        table.modo-general td { text-align: center; font-size: 13px;}
+        /* Aumento extra de fuente para los números en el detalle general */
+        table.modo-general td { text-align: center; font-size: 15px;}
         table.modo-general th:first-child, table.modo-general td:first-child {
             writing-mode: horizontal-tb; transform: none; height: auto; text-align: left;
-            max-width: none; min-width: 150px; vertical-align: middle; position: sticky; left: 0;
+            max-width: none; min-width: 160px; vertical-align: middle; position: sticky; left: 0;
             background-color: white; z-index: 1;
         }
         table.modo-general th:first-child { background-color: #f8f9fa; z-index: 2; }
+        
+        /* Estilo para las filas de totales */
+        .fila-totales { font-weight: bold !important; background-color: #eef2f5 !important; }
     </style>
 </head>
 <body>
@@ -69,7 +77,7 @@
         <div class="encabezado-dashboard">
             <div class="titulo-area">
                 <img src="Logo_Municipalidad.png" alt="Logo Municipalidad" class="logo">
-                <h1 style="margin: 0; font-size: 20px;">Control de Expedientes y Rendimiento</h1>
+                <h1 style="margin: 0; font-size: 22px;">Control de Expedientes y Rendimiento</h1>
             </div>
             <div class="fecha-emision">
                 Fecha de Emisión: <span id="fecha-actual"></span>
@@ -79,12 +87,12 @@
         <div id="menu-principal" style="display: none;">
             
             <div class="seccion-botones" style="border-left-color: #3498db;">
-                <h3>📊 Rendimiento General (Pestaña General)</h3>
+                <h3>📊 Cantidad de Expedientes</h3>
                 <div class="botones-container">
-                    <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Rendimiento Consolidado - Año 2026', false)">Consolidado 2026</button>
-                    <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Rendimiento Consolidado - Año 2025', false)">Consolidado 2025</button>
-                    <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'Rendimiento General (Detallado) - Año 2026', true)">General 2026</button>
-                    <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'Rendimiento General (Detallado) - Año 2025', true)">General 2025</button>
+                    <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false)">Consolidado 2026</button>
+                    <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Consolidado - Año 2025', false)">Consolidado 2025</button>
+                    <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'Detalle - Año 2026', true)">Detalle 2026</button>
+                    <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'Detalle - Año 2025', true)">Detalle 2025</button>
                 </div>
             </div>
 
@@ -135,7 +143,7 @@
                 datosGlobales = await respuesta.json();
                 
                 document.getElementById('menu-principal').style.display = 'block';
-                mostrarTabla('consolidado2026', 'Rendimiento Consolidado - Año 2026', false);
+                mostrarTabla('consolidado2026', 'Consolidado - Año 2026', false);
             } catch (error) {
                 console.error("Error:", error);
                 document.getElementById('titulo-actual').innerText = "Error de conexión. Verifique la API.";
@@ -164,7 +172,7 @@
             const matrizDatos = datosGlobales[idTabla];
 
             if (!matrizDatos || matrizDatos.length === 0) {
-                cuerpo.innerHTML = '<tr><td>No hay datos disponibles en este rango.</td></tr>';
+                cuerpo.innerHTML = '<tr><td colspan="100%">No hay datos disponibles en este rango.</td></tr>';
                 return;
             }
 
@@ -184,9 +192,22 @@
                 
                 if (filaTieneDatos) {
                     const tr = document.createElement('tr');
+                    
+                    // LÓGICA DE TOTALES: Si alguna celda de la fila contiene la palabra "TOTAL"
+                    const esFilaTotal = fila.some(celda => String(celda).trim().toUpperCase() === 'TOTAL');
+                    if (esFilaTotal) {
+                        tr.classList.add('fila-totales');
+                    }
+
                     fila.forEach((celda, index) => {
                         const td = document.createElement('td');
                         td.textContent = (celda !== null && celda !== undefined) ? celda : '';
+                        
+                        // LÓGICA DE TOTALES: Si la columna se llama "TOTAL", poner en negrita esa celda en particular
+                        if (encabezados[index] && String(encabezados[index]).trim().toUpperCase() === 'TOTAL') {
+                            td.style.fontWeight = 'bold';
+                        }
+                        
                         tr.appendChild(td);
                     });
                     cuerpo.appendChild(tr);
