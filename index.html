@@ -6,112 +6,53 @@
     <title>Dashboard Municipalidad</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- ESTILOS GENERALES (Roboto Condensed 12px) --- */
-        body { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            font-size: 12px; 
-            background-color: #f4f7f6; 
-            margin: 0; 
-            padding: 20px; 
-            color: #333;
-        }
+        /* --- ESTILOS GENERALES --- */
+        body { font-family: 'Roboto Condensed', sans-serif; font-size: 12px; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333;}
         .container { max-width: 1300px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .responsive-table { overflow-x: auto; margin-top: 15px; }
-
-        /* Estilo para el logo */
         .logo { max-width: 150px; height: auto; margin-bottom: 20px; }
         .encabezado-dashboard .logo { margin-bottom: 10px; max-width: 120px;}
 
         /* --- PANTALLA DE LOGIN --- */
-        #login-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #2c3e50; display: flex; justify-content: center; 
-            align-items: center; z-index: 1000; flex-direction: column; color: white; 
-        }
-        #login-screen input { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            padding: 12px; margin: 15px; border-radius: 5px; 
-            border: none; font-size: 14px; text-align: center; width: 200px;
-        }
-        #login-screen button { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            padding: 10px 25px; cursor: pointer; background: #18bc9c; 
-            border: none; border-radius: 5px; color: white; 
-            font-weight: bold; font-size: 14px; text-transform: uppercase;
-        }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white; }
+        #login-screen input { font-family: 'Roboto Condensed', sans-serif; padding: 12px; margin: 15px; border-radius: 5px; border: none; font-size: 14px; text-align: center; width: 200px;}
+        #login-screen button { font-family: 'Roboto Condensed', sans-serif; padding: 10px 25px; cursor: pointer; background: #18bc9c; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 14px; text-transform: uppercase;}
 
         /* --- ENCABEZADO Y FECHA --- */
-        .encabezado-dashboard {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+        .encabezado-dashboard { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .titulo-area { display: flex; align-items: center; gap: 15px; }
         .fecha-emision { font-weight: bold; color: #7f8c8d; }
 
-        /* --- BOTONES DE NAVEGACIÓN (Orden Corregido) --- */
-        .botones-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            padding: 8px 12px; background-color: white; 
-            border: 1px solid #ddd; border-radius: 4px; 
-            cursor: pointer; font-weight: bold; color: #555; 
-            transition: 0.2s; font-size: 12px;
-        }
-        .tab-btn:hover { background-color: #f1f1f1; }
+        /* --- MENÚ DE BOTONES ORGANIZADOS --- */
+        .seccion-botones { margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498db;}
+        .seccion-botones h3 { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #2c3e50; text-transform: uppercase;}
+        .botones-container { display: flex; gap: 8px; flex-wrap: wrap; }
+        
+        .tab-btn { font-family: 'Roboto Condensed', sans-serif; padding: 8px 12px; background-color: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-weight: bold; color: #555; transition: 0.2s; font-size: 12px;}
+        .tab-btn:hover { background-color: #e2e2e2; }
         .tab-btn.activo { background-color: #2c3e50; color: white; border-color: #2c3e50; }
 
         /* --- DISEÑO DE TABLA --- */
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e1e1e1; }
-        
-        /* Encabezado estándar */
         th { background-color: #f8f9fa; color: #2c3e50; font-weight: bold; text-transform: uppercase;}
-        
-        /* Efectos de fila */
         tbody tr:nth-of-type(even) { background-color: #fbfbfb; }
         tbody tr:hover { background-color: #f5f5f5; }
-        
         .titulo-tabla { margin-top: 0; color: #2c3e50; font-size: 16px;}
 
-        /* --- ESTILO VERTICAL PARA TABLAS GENERALES (Optimizado para móvil) --- */
-        /* Esta clase se aplicará dinámicamente vía JS a las tablas General */
+        /* --- MODO VERTICAL (Para tablas generales/detalladas) --- */
         table.modo-general th {
-            writing-mode: vertical-rl; /* Texto vertical de abajo hacia arriba */
-            transform: rotate(180deg); /* Asegura que se lea de abajo hacia arriba */
-            text-align: center;
-            height: 150px; /* Altura fija para contener nombres largos */
-            padding: 5px;
-            vertical-align: bottom;
-            max-width: 25px; /* Columnas muy estrechas */
-            border-left: 1px solid #e1e1e1;
-            border-right: 1px solid #e1e1e1;
-            font-size: 11px; /* Ligeramente más pequeña para caber */
+            writing-mode: vertical-rl; transform: rotate(180deg); text-align: center;
+            height: 150px; padding: 5px; vertical-align: bottom; max-width: 25px;
+            border-left: 1px solid #e1e1e1; border-right: 1px solid #e1e1e1; font-size: 11px;
         }
-        
-        /* Alineación central para datos numéricos en modo general */
         table.modo-general td { text-align: center; font-size: 13px;}
-        /* Primera columna (Nombre/No.) siempre horizontal y a la izquierda */
-        table.modo-general th:first-child,
-        table.modo-general td:first-child {
-            writing-mode: horizontal-tb;
-            transform: none;
-            height: auto;
-            text-align: left;
-            max-width: none;
-            min-width: 150px; /* Espacio para el nombre del técnico */
-            vertical-align: middle;
-            position: sticky; /* Congela la columna de nombres al hacer scroll */
-            left: 0;
-            background-color: white;
-            z-index: 1;
+        table.modo-general th:first-child, table.modo-general td:first-child {
+            writing-mode: horizontal-tb; transform: none; height: auto; text-align: left;
+            max-width: none; min-width: 150px; vertical-align: middle; position: sticky; left: 0;
+            background-color: white; z-index: 1;
         }
-         table.modo-general th:first-child { background-color: #f8f9fa; z-index: 2; }
-
+        table.modo-general th:first-child { background-color: #f8f9fa; z-index: 2; }
     </style>
 </head>
 <body>
@@ -128,18 +69,35 @@
         <div class="encabezado-dashboard">
             <div class="titulo-area">
                 <img src="Logo_Municipalidad.png" alt="Logo Municipalidad" class="logo">
-                <h1 style="margin: 0; font-size: 20px;">Rendimiento Técnico</h1>
+                <h1 style="margin: 0; font-size: 20px;">Control de Expedientes y Rendimiento</h1>
             </div>
             <div class="fecha-emision">
                 Fecha de Emisión: <span id="fecha-actual"></span>
             </div>
         </div>
 
-        <div class="botones-container" id="menu-botones" style="display: none;">
-            <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Consolidado del Año 2026', false)">Consolidado 2026</button>
-            <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Consolidado del Año 2025', false)">Consolidado 2025</button>
-            <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'General del Año 2026', true)">General 2026</button>
-            <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'General del Año 2025', true)">General 2025</button>
+        <div id="menu-principal" style="display: none;">
+            
+            <div class="seccion-botones" style="border-left-color: #3498db;">
+                <h3>📊 Rendimiento General (Pestaña General)</h3>
+                <div class="botones-container">
+                    <button class="tab-btn" id="btn-consolidado2026" onclick="mostrarTabla('consolidado2026', 'Rendimiento Consolidado - Año 2026', false)">Consolidado 2026</button>
+                    <button class="tab-btn" id="btn-consolidado2025" onclick="mostrarTabla('consolidado2025', 'Rendimiento Consolidado - Año 2025', false)">Consolidado 2025</button>
+                    <button class="tab-btn" id="btn-general2026" onclick="mostrarTabla('general2026', 'Rendimiento General (Detallado) - Año 2026', true)">General 2026</button>
+                    <button class="tab-btn" id="btn-general2025" onclick="mostrarTabla('general2025', 'Rendimiento General (Detallado) - Año 2025', true)">General 2025</button>
+                </div>
+            </div>
+
+            <div class="seccion-botones" style="border-left-color: #e67e22;">
+                <h3>📂 Ubicación de Expedientes (Pestaña Estado)</h3>
+                <div class="botones-container">
+                    <button class="tab-btn" id="btn-estadoConsolidado2026" onclick="mostrarTabla('estadoConsolidado2026', 'Ubicación de Expedientes (Consolidado) - 2026', false)">Ubicación 2026</button>
+                    <button class="tab-btn" id="btn-estadoConsolidado2025" onclick="mostrarTabla('estadoConsolidado2025', 'Ubicación de Expedientes (Consolidado) - 2025', false)">Ubicación 2025</button>
+                    <button class="tab-btn" id="btn-estadoGeneral2026" onclick="mostrarTabla('estadoGeneral2026', 'Detalle de Ubicación por Inspector - 2026', true)">Detalle 2026</button>
+                    <button class="tab-btn" id="btn-estadoGeneral2025" onclick="mostrarTabla('estadoGeneral2025', 'Detalle de Ubicación por Inspector - 2025', true)">Detalle 2025</button>
+                </div>
+            </div>
+
         </div>
 
         <h2 class="titulo-tabla" id="titulo-actual">Sincronizando con Google Sheets...</h2>
@@ -153,14 +111,12 @@
     </div>
 
     <script>
-        // --- 1. SEGURIDAD Y FECHA ---
         function checkPassword() {
             const pass = document.getElementById('password').value;
             if (pass === '123456') { 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
                 
-                // Colocar la fecha actual
                 const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-ES', opciones);
                 
@@ -170,9 +126,7 @@
             }
         }
 
-        // --- 2. CONEXIÓN CON APPS SCRIPT ---
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5M2vPZLqENz5W4KbKNhJWrKvWG3EgkBqUw02Xgz-IDpRNiTBWifeeXwBGyhNNvfbRNA/exec';
-        
         let datosGlobales = {};
 
         async function cargarDatos() {
@@ -180,19 +134,14 @@
                 const respuesta = await fetch(APPS_SCRIPT_URL);
                 datosGlobales = await respuesta.json();
                 
-                document.getElementById('menu-botones').style.display = 'flex';
-                
-                // Mostrar por defecto la primera tabla (Consolidado 2026)
-                mostrarTabla('consolidado2026', 'Consolidado del Año 2026', false);
-
+                document.getElementById('menu-principal').style.display = 'block';
+                mostrarTabla('consolidado2026', 'Rendimiento Consolidado - Año 2026', false);
             } catch (error) {
                 console.error("Error:", error);
                 document.getElementById('titulo-actual').innerText = "Error de conexión. Verifique la API.";
             }
         }
 
-        // --- 3. LÓGICA DE TABLA Y FORMATO VERTICAL ---
-        // 'esGeneral' es un booleano para decidir si aplicar texto vertical
         function mostrarTabla(idTabla, titulo, esGeneral) {
             document.getElementById('titulo-actual').innerText = titulo;
 
@@ -206,7 +155,6 @@
             cabecera.innerHTML = '';
             cuerpo.innerHTML = '';
 
-            // Aplicar o quitar la clase de diseño vertical 'modo-general'
             if (esGeneral) {
                 tablaEl.classList.add('modo-general');
             } else {
@@ -220,7 +168,6 @@
                 return;
             }
 
-            // Encabezados (Fila 0)
             const encabezados = matrizDatos[0];
             const trCabecera = document.createElement('tr');
             
@@ -231,17 +178,14 @@
             });
             cabecera.appendChild(trCabecera);
 
-            // Datos (Filas 1 en adelante)
             for (let i = 1; i < matrizDatos.length; i++) {
                 const fila = matrizDatos[i];
-                // Evitar filas vacías
                 const filaTieneDatos = fila.some(celda => celda !== "" && celda !== null); 
                 
                 if (filaTieneDatos) {
                     const tr = document.createElement('tr');
                     fila.forEach((celda, index) => {
                         const td = document.createElement('td');
-                        // Reemplazamos nulls o undefineds por vacío para limpieza
                         td.textContent = (celda !== null && celda !== undefined) ? celda : '';
                         tr.appendChild(td);
                     });
